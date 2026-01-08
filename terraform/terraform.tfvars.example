@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars (do not commit real secrets)
+render_api_key      = "rnd_xxx"
+render_owner_id     = "usr-xxx"
+repo_url            = "https://github.com/shichenz1999/ai-work-assistant"
+repo_branch         = "main"
+service_name        = "ai-orchestrator"
+discord_service_name = "discord-listener"
+plan                = "starter"
+region              = "oregon"
+
+anthropic_api_key           = "sk-ant-xxx"
+google_oauth_client_id      = "xxx.apps.googleusercontent.com"
+google_oauth_client_secret  = "xxx"
+public_base_url             = "https://your-app.onrender.com"
+discord_bot_token           = "discord-bot-token"

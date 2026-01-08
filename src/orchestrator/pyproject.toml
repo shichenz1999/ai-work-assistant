@@ -1,0 +1,16 @@
+[project]
+name = "orchestrator"
+version = "0.1.0"
+description = "Orchestrator service for routing chat events to tools."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.118.0",
+    "pydantic>=2.11.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/orchestrator"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

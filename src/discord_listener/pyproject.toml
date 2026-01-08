@@ -1,0 +1,21 @@
+[project]
+name = "discord-listener"
+version = "0.1.0"
+description = "Discord listener forwarding events to the orchestrator."
+requires-python = ">=3.11"
+dependencies = [
+    "discord.py>=2.4.0",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.5",
+    "orchestrator",
+]
+
+[tool.uv.sources]
+orchestrator = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/discord_listener"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

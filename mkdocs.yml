@@ -1,0 +1,58 @@
+site_name: AI Work Assistant
+site_description: "A professional-grade template for a modern Python project."
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - content.code.copy
+
+nav:
+  - 'Overview': 'index.md'
+  - 'Architecture': 'component.md'
+  - 'Testing': 'testing.md'
+  - 'CI Setup': 'circleci-setup.md'
+  - 'API Reference':
+    - 'Mail Client API': 'api/mail_client_api.md'
+    - 'Message Protocol': 'api/message.md'
+    - 'Gmail Client Implementation': 'api/gmail_client_impl.md'
+    - 'Gmail Message Implementation': 'api/gmail_message_impl.md'
+    - 'AI Client API': 'api/ai_client_api.md'
+    - 'AI Model Protocols': 'api/ai_client_api_models.md'
+    - 'Claude Client Implementation': 'api/claude_client_impl.md'
+    - 'Claude Model Implementation': 'api/claude_model_impl.md'
+    - 'Orchestrator Service': 'api/orchestrator.md'
+    - 'Discord Listener': 'api/discord_listener.md'
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          # This helps mkdocstrings find packages in the src directory
+          paths:
+            - src/mail_client_api/src
+            - src/gmail_client_impl/src
+            - src/ai_client_api/src
+            - src/claude_client_impl/src
+            - src/orchestrator/src
+            - src/discord_listener/src
+          options:
+            show_source: false
+            docstring_section_style: spacy
+            members_order: source
