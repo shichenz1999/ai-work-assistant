@@ -1,6 +1,6 @@
 # Copy to terraform.tfvars (do not commit real secrets)
 render_api_key      = "rnd_xxx"
-render_owner_id     = "usr-xxx"
+render_owner_id     = "tea-xxx"
 repo_url            = "https://github.com/shichenz1999/ai-work-assistant"
 repo_branch         = "main"
 service_name        = "ai-orchestrator"

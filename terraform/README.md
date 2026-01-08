@@ -1,6 +1,6 @@
 # Terraform (Render Deployment)
 
-Deploy the orchestrator service to Render using the repo Dockerfile.
+Deploy the orchestrator service and Discord listener to Render using the repo Dockerfile.
 
 ## Prerequisites
 - Render API key and owner/team ID.
@@ -19,10 +19,12 @@ Required in `terraform.tfvars`:
 - `google_oauth_client_id`
 - `google_oauth_client_secret`
 - `public_base_url`
+- `discord_bot_token`
 
 Optional (defaults apply):
 - `repo_branch`
 - `service_name`
+- `discord_service_name`
 - `plan`
 - `region`
 
