@@ -21,6 +21,7 @@
 - `/auth/google/login` starts the OAuth flow and stores state in SQLite.
 - `/auth/google/callback` exchanges tokens and stores refresh tokens.
 - `/auth/google/logout` deletes stored tokens for the user.
+- `/auth/google/status` reports whether a user is signed in.
 
 ### Tooling
 - `orchestrator.tools.mail` registers mail tools backed by `mail_client_api`.
@@ -34,6 +35,7 @@
 - `GET /auth/google/login?user_id=...` -> Redirects to Google OAuth
 - `GET /auth/google/callback?state=...&code=...` -> OAuth completion message
 - `GET /auth/google/logout?user_id=...` -> Logout confirmation
+- `GET /auth/google/status?user_id=...` -> OAuth sign-in status
 
 ### Payloads
 `POST /events/message` request body:

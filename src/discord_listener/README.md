@@ -7,7 +7,7 @@
 - Receive Discord DMs and normalize them for the orchestrator.
 - Relay AI replies (including multi-part messages) back to Discord.
 - Provide login/logout UX via slash commands and link buttons.
-- Check auth status using the shared SQLite auth store.
+- Check auth status using the orchestrator auth status endpoint.
 
 ## Architecture
 
@@ -45,7 +45,6 @@ In Discord, run:
 - `DISCORD_BOT_TOKEN` (required) - Bot token for the Discord application.
 - `PUBLIC_BASE_URL` (required) - Base URL used to reach the orchestrator.
 - `AUTH_PROVIDERS` (optional) - Comma-separated auth providers (default: `google`).
-- `ORCHESTRATOR_AUTH_DB` (optional) - SQLite path for OAuth tokens (default: `orchestrator_auth.db`).
 
 ## Testing
 ```bash

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import importlib
 import runpy
-import sqlite3
 import sys
 from types import ModuleType, SimpleNamespace
 from typing import TYPE_CHECKING, Any
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
+import requests
 from orchestrator.models import IncomingMessage, OrchestratorReply
 
 if TYPE_CHECKING:
@@ -29,7 +29,6 @@ def discord_module(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> ModuleTyp
     monkeypatch.setenv("DISCORD_BOT_TOKEN", "test-token")
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://example.com")
     monkeypatch.setenv("AUTH_PROVIDERS", "google")
-    monkeypatch.setenv("ORCHESTRATOR_AUTH_DB", str(tmp_path / "auth.db"))
 
     import discord_listener.main as module
 
@@ -53,23 +52,36 @@ class TestDiscordListenerHelpers:
         text = "abcdefghij"
         assert discord_module._chunk_text(text, max_len=4) == ["abcd", "efgh", "ij"]
 
-    def test_is_logged_in_true_false(self, discord_module: ModuleType) -> None:
-        """SQLite lookup returns True/False based on row existence."""
-        conn = sqlite3.connect(discord_module.ORCHESTRATOR_AUTH_DB)
-        conn.execute("CREATE TABLE oauth_tokens (user_id TEXT, provider TEXT)")
-        conn.execute("INSERT INTO oauth_tokens VALUES (?, ?)", ("u1", "google"))
-        conn.commit()
-        conn.close()
+    def test_is_logged_in_true_false(self, discord_module: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
+        """HTTP lookup returns True/False based on response payload."""
+        response_true = Mock()
+        response_true.raise_for_status = Mock()
+        response_true.json.return_value = {"logged_in": True}
+
+        response_false = Mock()
+        response_false.raise_for_status = Mock()
+        response_false.json.return_value = {"logged_in": False}
+
+        mock_get = Mock(side_effect=[response_true, response_false])
+        monkeypatch.setattr(discord_module.requests, "get", mock_get)
 
         assert discord_module._is_logged_in("u1", "google") is True
         assert discord_module._is_logged_in("u2", "google") is False
 
+        expected_url = f"{discord_module.PUBLIC_BASE_URL.rstrip('/')}/auth/google/status?user_id=u1"
+        mock_get.assert_has_calls(
+            [
+                call(expected_url, timeout=5.0),
+                call(f"{discord_module.PUBLIC_BASE_URL.rstrip('/')}/auth/google/status?user_id=u2", timeout=5.0),
+            ]
+        )
+
     def test_is_logged_in_handles_errors(self, discord_module: ModuleType, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Database errors return None instead of raising."""
+        """Request errors return None instead of raising."""
         monkeypatch.setattr(
-            discord_module.sqlite3,
-            "connect",
-            Mock(side_effect=sqlite3.Error("boom")),
+            discord_module.requests,
+            "get",
+            Mock(side_effect=requests.RequestException("boom")),
         )
         assert discord_module._is_logged_in("u1", "google") is None
 
@@ -153,7 +165,6 @@ class TestDiscordListenerConfig:
         """Import raises when DISCORD_BOT_TOKEN is missing."""
         monkeypatch.setenv("DISCORD_BOT_TOKEN", "")
         monkeypatch.setenv("PUBLIC_BASE_URL", "https://example.com")
-        monkeypatch.setenv("ORCHESTRATOR_AUTH_DB", str(tmp_path / "auth.db"))
         with pytest.raises(RuntimeError, match="DISCORD_BOT_TOKEN is required"):
             _import_module_fresh()
 
@@ -161,7 +172,6 @@ class TestDiscordListenerConfig:
         """Import raises when PUBLIC_BASE_URL is missing."""
         monkeypatch.setenv("DISCORD_BOT_TOKEN", "token")
         monkeypatch.setenv("PUBLIC_BASE_URL", "")
-        monkeypatch.setenv("ORCHESTRATOR_AUTH_DB", str(tmp_path / "auth.db"))
         with pytest.raises(RuntimeError, match="PUBLIC_BASE_URL is required"):
             _import_module_fresh()
 
@@ -517,7 +527,6 @@ def test_main_runs_when_invoked_as_script(monkeypatch: pytest.MonkeyPatch, tmp_p
     monkeypatch.setenv("DISCORD_BOT_TOKEN", "token")
     monkeypatch.setenv("PUBLIC_BASE_URL", "https://example.com")
     monkeypatch.setenv("AUTH_PROVIDERS", "google")
-    monkeypatch.setenv("ORCHESTRATOR_AUTH_DB", str(tmp_path / "auth.db"))
 
     if "discord_listener.main" in sys.modules:
         del sys.modules["discord_listener.main"]

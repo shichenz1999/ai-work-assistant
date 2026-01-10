@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import os
-import sqlite3
 
 import discord
 import requests
@@ -18,7 +17,6 @@ logger = logging.getLogger("discord_listener")
 DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN")
 PUBLIC_BASE_URL = os.environ.get("PUBLIC_BASE_URL")
 AUTH_PROVIDERS = os.environ.get("AUTH_PROVIDERS", "google")
-ORCHESTRATOR_AUTH_DB = os.environ.get("ORCHESTRATOR_AUTH_DB", "orchestrator_auth.db")
 AUTH_PROVIDERS_LIST = [provider.strip() for provider in AUTH_PROVIDERS.split(",") if provider.strip()] or ["google"]
 DISCORD_MAX_LEN = 2000
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -61,17 +59,14 @@ def _chunk_text(text: str, max_len: int = DISCORD_MAX_LEN) -> list[str]:
 
 def _is_logged_in(user_id: str, provider: str) -> bool | None:
     try:
-        conn = sqlite3.connect(ORCHESTRATOR_AUTH_DB)
-        try:
-            row = conn.execute(
-                "SELECT 1 FROM oauth_tokens WHERE user_id = ? AND provider = ? LIMIT 1",
-                (user_id, provider),
-            ).fetchone()
-        finally:
-            conn.close()
-    except sqlite3.Error:
+        response = requests.get(_build_auth_url("status", user_id, provider), timeout=5.0)
+        response.raise_for_status()
+        payload = response.json()
+    except (requests.RequestException, ValueError, TypeError):
         return None
-    return row is not None
+    if not isinstance(payload, dict):
+        return None
+    return bool(payload.get("logged_in"))
 
 
 def _build_auth_url(action: str, user_id: str, provider: str) -> str:

@@ -100,6 +100,25 @@ def oauth_logout(user_id: str) -> PlainTextResponse:
     return PlainTextResponse("Signed out. You can close this window.")
 
 
+@router.get("/auth/google/status")
+def oauth_status(user_id: str) -> dict[str, bool]:
+    """Return whether a user is logged in for Google."""
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required.")
+    try:
+        conn = _open_db()
+        try:
+            row = conn.execute(
+                "SELECT 1 FROM oauth_tokens WHERE user_id = ? AND provider = ? LIMIT 1",
+                (user_id, GOOGLE_PROVIDER),
+            ).fetchone()
+        finally:
+            conn.close()
+    except sqlite3.Error as exc:
+        raise HTTPException(status_code=500, detail="Auth DB error.") from exc
+    return {"logged_in": row is not None}
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

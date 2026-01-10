@@ -44,6 +44,31 @@ def test_login_missing_config(monkeypatch: pytest.MonkeyPatch) -> None:
     assert resp.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
+def test_status_missing_user_id() -> None:
+    """Reject status checks when user_id is missing."""
+    client = _client_with_router()
+    resp = client.get("/auth/google/status")
+    assert resp.status_code in {HTTPStatus.UNPROCESSABLE_ENTITY, HTTPStatus.BAD_REQUEST}
+
+
+def test_status_reports_logged_in(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Status should be true when a token exists."""
+    db_path = tmp_path / "auth.db"
+    monkeypatch.setattr(auth_routes, "AUTH_DB_PATH", db_path)
+    conn = auth_routes._open_db()
+    conn.execute(
+        "INSERT INTO oauth_tokens (user_id, provider, refresh_token, access_token, expires_at, scopes, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        ("u1", "google", "refresh", None, None, "[]", 0),
+    )
+    conn.commit()
+    conn.close()
+
+    client = _client_with_router()
+    resp = client.get("/auth/google/status", params={"user_id": "u1"})
+    assert resp.status_code == HTTPStatus.OK
+    assert resp.json() == {"logged_in": True}
+
+
 def test_callback_missing_params() -> None:
     """Reject callback when params are missing."""
     client = _client_with_router()
